@@ -33,6 +33,9 @@ namespace UserManage.API.Controller
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            if (!await roleManager.RoleExistsAsync(role))
+                return BadRequest($"the role : {role} does not exist");
+
             // Check User exists
             if (await userManager.Users.AnyAsync(u => u.UserName == registerUser.UserName))
                 return BadRequest("User already exists");
@@ -51,6 +54,7 @@ namespace UserManage.API.Controller
                 return BadRequest(result.Errors);
 
             // Assign a role to User
+            await userManager.AddToRoleAsync(user, role);
 
             return Ok("User created successfully");
         }
