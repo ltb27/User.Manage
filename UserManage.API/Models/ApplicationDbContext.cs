@@ -12,6 +12,34 @@ namespace UserManage.API.Models
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+            SeedRoles(builder);
+        }
+
+        //   Role Seeding
+        private void SeedRoles(ModelBuilder modelBuilder)
+        {
+            modelBuilder
+                .Entity<IdentityRole>()
+                .HasData(
+                    new IdentityRole()
+                    {
+                        Name = "Admin",
+                        ConcurrencyStamp = "1",
+                        NormalizedName = "Admin"
+                    },
+                    new IdentityRole()
+                    {
+                        Name = "User",
+                        ConcurrencyStamp = "2",
+                        NormalizedName = "User"
+                    },
+                    new IdentityRole()
+                    {
+                        Name = "HR",
+                        ConcurrencyStamp = "3",
+                        NormalizedName = "Human Resource"
+                    }
+                );
         }
     }
 }
