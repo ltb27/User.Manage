@@ -18,6 +18,12 @@ builder.Services.Configure<EmailConfiguration>(configuration.GetSection("SmtpCon
 // For Email Service
 builder.Services.AddScoped<IEmailService, EmailService>();
 
+// For Identity Sign In Options. Require confirm email when signing up to be able to sign in
+builder.Services.Configure<IdentityOptions>(options =>
+{
+    options.SignIn.RequireConfirmedEmail = true;
+});
+
 // For EFCore
 builder.Services.AddDbContext<ApplicationDbContext>(
     options => options.UseSqlServer(configuration.GetConnectionString("SqlServerConnectionString"))

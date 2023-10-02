@@ -58,21 +58,51 @@ namespace User.Manage.API.Controller
             // Assign a role to User
             await userManager.AddToRoleAsync(user, role);
 
-            return Ok("User created successfully");
-        }
-
-        [HttpPost("send-email")]
-        public async Task<IActionResult> SendEmail()
-        {
-            var message = new Message(
-                new string[] { "letuanbao@mbg8.onmicrosoft.com" },
-                "Hello World",
-                "Hello"
+            // Send confirm email
+            var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+            var confirmationLink = Url.Action(
+                "ConfirmEmail",
+                "Authentication",
+                new { token, email = user.Email },
+                Request.Scheme
             );
 
-            await emailService.SendEmailAsync(message);
+            var content =
+                @$"
+                  <h1>please, Confirm Email to finish sign up process </h1>
+                  <br/>
+                  <div>
+                     {confirmationLink}
+                  </div>
+            ";
 
-            return Ok();
+            await emailService.SendEmailAsync(
+                new Message(
+                    to: new string[] { user.Email ?? string.Empty },
+                    "Confirm your email",
+                    content
+                )
+            );
+
+            return Ok(
+                "User created successfully and email sent to your email.Confirm Email to finish sign up process"
+            );
+        }
+
+        [HttpGet("ConfirmEmail")]
+        public async Task<IActionResult> ConfirmEmail(string token, string email)
+        {
+            var user = await userManager.FindByEmailAsync(email);
+
+            if (user == null)
+                return NotFound($"User with email : {email} does not exist in system");
+
+            var result = await userManager.ConfirmEmailAsync(user, token);
+
+            if (result.Succeeded)
+                return Ok("Email confirmed successfully");
+
+            return BadRequest(result.Errors);
         }
     }
 }
