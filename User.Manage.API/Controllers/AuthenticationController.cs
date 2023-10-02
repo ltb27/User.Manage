@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using UserManage.API.Models.Authentication.SignUp;
+using User.Manage.API.Models.Authentication.SignUp;
 
-namespace UserManage.API.Controller
+namespace User.Manage.API.Controller
 {
     [Route("api/[controller]")]
     public class AuthenticationController : ControllerBase
