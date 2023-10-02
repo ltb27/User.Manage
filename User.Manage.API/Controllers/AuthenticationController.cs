@@ -1,7 +1,15 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using User.Manage.API.Models;
 using User.Manage.API.Models.Authentication.SignUp;
+using User.Manage.API.Models.Configuration;
 using User.Manage.Services.Emails;
 using User.Manage.Services.Models.Emails;
 
@@ -13,16 +21,19 @@ namespace User.Manage.API.Controller
         private readonly UserManager<IdentityUser> userManager;
         private readonly RoleManager<IdentityRole> roleManager;
         private readonly IEmailService emailService;
+        private readonly IOptions<JWTConfiguration> jwtOptions;
 
         public AuthenticationController(
             UserManager<IdentityUser> userManager,
             RoleManager<IdentityRole> roleManager,
-            IEmailService emailService
+            IEmailService emailService,
+            IOptions<JWTConfiguration> jwtOptions
         )
         {
             this.userManager = userManager;
             this.roleManager = roleManager;
             this.emailService = emailService;
+            this.jwtOptions = jwtOptions;
         }
 
         [HttpPost]
@@ -103,6 +114,62 @@ namespace User.Manage.API.Controller
                 return Ok("Email confirmed successfully");
 
             return BadRequest(result.Errors);
+        }
+
+        [HttpPost("Login")]
+        public async Task<IActionResult> Login([FromBody] LogIn logIn)
+        {
+            // Check Model State
+            if (!ModelState.IsValid)
+                return BadRequest();
+
+            // Check User exists and  Check Password is correct
+            var user = await userManager.FindByNameAsync(logIn.UserName);
+
+            if (user == null || !await userManager.CheckPasswordAsync(user, logIn.Password))
+                return BadRequest("Invalid username or password");
+
+            // Generate Claims
+            var claims = new List<Claim>()
+            {
+                new(ClaimTypes.Name, user.UserName),
+                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
+
+            // Add user roles to claims list
+            var userRoles = await userManager.GetRolesAsync(user);
+            foreach (var userRole in userRoles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, userRole));
+            }
+
+            // Get user token
+            var token = GenerateAccessToken(claims);
+            // return Token
+            var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
+
+            return Ok(new { accessToken, expiration = token.ValidTo });
+        }
+
+        private JwtSecurityToken GenerateAccessToken(IList<Claim> claims)
+        {
+            // create security signature
+            var secretSignature = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtOptions.Value.SecretKey)
+            );
+
+            var accessToken = new JwtSecurityToken(
+                issuer: jwtOptions.Value.Issuer,
+                audience: jwtOptions.Value.Audience,
+                claims: claims,
+                expires: DateTime.Now.AddHours(3),
+                signingCredentials: new SigningCredentials(
+                    secretSignature,
+                    SecurityAlgorithms.HmacSha256
+                )
+            );
+
+            return accessToken;
         }
     }
 }

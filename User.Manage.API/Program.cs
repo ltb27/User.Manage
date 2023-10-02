@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using User.Manage.API.Models;
+using User.Manage.API.Models.Configuration;
 using User.Manage.Services.Emails;
 using User.Manage.Services.Models.Emails;
 
@@ -14,6 +15,9 @@ var configuration = builder.Configuration;
 
 // for email configuration
 builder.Services.Configure<EmailConfiguration>(configuration.GetSection("SmtpConfiguration"));
+
+// For JWT configuration
+builder.Services.Configure<JWTConfiguration>(configuration.GetSection("JWT"));
 
 // For Email Service
 builder.Services.AddScoped<IEmailService, EmailService>();
