@@ -4,14 +4,15 @@ namespace User.Manage.Services.Models.Emails
 {
     public class Message
     {
+        // people who will receive mail
         public List<MailboxAddress> To { get; set; }
         public string Subject { get; set; }
         public string Content { get; set; }
 
-        public Message(List<MailboxAddress> To, string subject, string content)
+        public Message(IEnumerable<string> to, string subject, string content)
         {
-            this.To = new List<MailboxAddress>();
-            To.AddRange(To.Select(t => new MailboxAddress(t.Name, t.Address)));
+            To = new List<MailboxAddress>();
+            To.AddRange(to.Select(t => new MailboxAddress("email", t)));
             Subject = subject;
             Content = content;
         }

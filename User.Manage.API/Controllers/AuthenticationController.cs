@@ -2,25 +2,27 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using User.Manage.API.Models.Authentication.SignUp;
+using User.Manage.Services.Emails;
+using User.Manage.Services.Models.Emails;
 
 namespace User.Manage.API.Controller
 {
     [Route("api/[controller]")]
     public class AuthenticationController : ControllerBase
     {
-        private readonly IConfiguration configuration;
         private readonly UserManager<IdentityUser> userManager;
         private readonly RoleManager<IdentityRole> roleManager;
+        private readonly IEmailService emailService;
 
         public AuthenticationController(
-            IConfiguration configuration,
             UserManager<IdentityUser> userManager,
-            RoleManager<IdentityRole> roleManager
+            RoleManager<IdentityRole> roleManager,
+            IEmailService emailService
         )
         {
-            this.configuration = configuration;
             this.userManager = userManager;
             this.roleManager = roleManager;
+            this.emailService = emailService;
         }
 
         [HttpPost]
@@ -57,6 +59,20 @@ namespace User.Manage.API.Controller
             await userManager.AddToRoleAsync(user, role);
 
             return Ok("User created successfully");
+        }
+
+        [HttpPost("send-email")]
+        public async Task<IActionResult> SendEmail()
+        {
+            var message = new Message(
+                new string[] { "letuanbao@mbg8.onmicrosoft.com" },
+                "Hello World",
+                "Hello"
+            );
+
+            await emailService.SendEmailAsync(message);
+
+            return Ok();
         }
     }
 }

@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using UserManage.API.Models;
+using User.Manage.API.Models;
+using User.Manage.Services.Emails;
+using User.Manage.Services.Models.Emails;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +11,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 // configurations
 var configuration = builder.Configuration;
+
+// for email configuration
+builder.Services.Configure<EmailConfiguration>(configuration.GetSection("SmtpConfiguration"));
+
+// For Email Service
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 // For EFCore
 builder.Services.AddDbContext<ApplicationDbContext>(
@@ -22,12 +30,14 @@ builder.Services
     .AddDefaultTokenProviders();
 
 // For Authentication
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-});
+builder.Services
+    .AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options => { });
 
 // For Controllers
 builder.Services.AddControllers();
