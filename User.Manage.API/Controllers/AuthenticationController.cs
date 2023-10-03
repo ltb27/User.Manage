@@ -4,7 +4,6 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -125,8 +124,7 @@ namespace User.Manage.API.Controller
                 return BadRequest();
 
             // Check User exists and  Check Password is correct
-            ApplicationUser? user = (ApplicationUser)
-                await userManager.FindByNameAsync(logIn.UserName);
+            ApplicationUser? user = await userManager.FindByNameAsync(logIn.UserName);
 
             if (user == null || !await userManager.CheckPasswordAsync(user, logIn.Password))
                 return BadRequest("Invalid username or password");
@@ -187,7 +185,7 @@ namespace User.Manage.API.Controller
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
 #pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
-            ApplicationUser user = (ApplicationUser)await userManager.FindByNameAsync(username);
+            ApplicationUser user = await userManager.FindByNameAsync(username);
 
             if (
                 user == null
