@@ -1,6 +1,8 @@
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using User.Manage.API.Models;
 using User.Manage.API.Models.Configuration;
 using User.Manage.Services.Emails;
@@ -40,6 +42,11 @@ builder.Services
     .AddDefaultTokenProviders();
 
 // For Authentication
+var jwtConfiguration = builder.Configuration.GetSection("JWT").Get<JWTConfiguration>();
+var secretKey = jwtConfiguration.SecretKey;
+var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+
+// config authentication default scheme
 builder.Services
     .AddAuthentication(options =>
     {
@@ -47,7 +54,40 @@ builder.Services
         options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
         options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
     })
-    .AddJwtBearer(options => { });
+    //  config options for jwt bear token authentication handler
+    .AddJwtBearer(options =>
+    {
+        options.SaveToken = true;
+        options.RequireHttpsMetadata = builder.Environment.IsProduction();
+        //   config the way to validate token
+        options.TokenValidationParameters = new TokenValidationParameters()
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = signingKey,
+            ValidateIssuer = true,
+            ValidIssuer = jwtConfiguration.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwtConfiguration.Audience,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
+        };
+
+        //   config events handler for jwt bear token authentication procedure
+        //   default behavior of jwt token handler will get the token from header(Authorization)
+        //   config this event to get the token from other place
+        options.Events = new JwtBearerEvents()
+        {
+            OnMessageReceived = context =>
+            {
+                if (context.Request.Query.TryGetValue("access_token", out var token))
+                {
+                    context.Token = token;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
+    });
 
 // For Controllers
 builder.Services.AddControllers();
@@ -66,7 +106,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
