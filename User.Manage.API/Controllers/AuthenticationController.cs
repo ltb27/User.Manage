@@ -36,7 +36,7 @@ namespace User.Manage.API.Controller
             this.jwtOptions = jwtOptions;
         }
 
-        [HttpPost]
+        [HttpPost("register-user")]
         public async Task<IActionResult> Register(
             [FromBody] RegisterUser registerUser,
             [FromQuery] string role
