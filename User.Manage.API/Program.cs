@@ -18,6 +18,7 @@ var builder = WebApplication.CreateBuilder(args);
 // configurations
 var configuration = builder.Configuration;
 var env = builder.Environment;
+
 // for email configuration
 builder.Services.Configure<EmailConfiguration>(configuration.GetSection("SmtpConfiguration"));
 
@@ -105,68 +106,64 @@ builder.Services
         };
     });
 
+// For Authorization policy configurations
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(
+        "CheckPermission",
+        policy =>
+        {
+            policy.Requirements.Add(new CheckPermissionRequirement());
+        }
+    );
+});
+
 // For Controllers
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 
- builder.Services.AddSwaggerGen(s =>
+builder.Services.AddSwaggerGen(s =>
+{
+    s.SwaggerDoc(
+        "v1",
+        new OpenApiInfo
+        {
+            Version = "v1",
+            Title = "EcomSea API",
+            Description = "Api for EcomSea App",
+        }
+    );
+
+    s.AddSecurityDefinition(
+        "Bearer",
+        new OpenApiSecurityScheme
+        {
+            In = ParameterLocation.Header,
+            Description = "Please enter token",
+            Name = "Authorization",
+            Type = SecuritySchemeType.Http,
+            BearerFormat = "JWT",
+            Scheme = "bearer"
+        }
+    );
+    s.AddSecurityRequirement(
+        new OpenApiSecurityRequirement
+        {
             {
-                s.SwaggerDoc(
-                    "v1",
-                    new OpenApiInfo
+                new OpenApiSecurityScheme
+                {
+                    Reference = new OpenApiReference
                     {
-                        Version = "v1",
-                        Title = "EcomSea API",
-                        Description = "Api for EcomSea App",
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "Bearer"
                     }
-                );
-
-                s.AddSecurityDefinition(
-                    "Bearer",
-                    new OpenApiSecurityScheme
-                    {
-                        In = ParameterLocation.Header,
-                        Description = "Please enter token",
-                        Name = "Authorization",
-                        Type = SecuritySchemeType.Http,
-                        BearerFormat = "JWT",
-                        Scheme = "bearer"
-                    }
-                );
-                s.AddSecurityRequirement(
-                    new OpenApiSecurityRequirement
-                    {
-                        {
-                            new OpenApiSecurityScheme
-                            {
-                                Reference = new OpenApiReference
-                                {
-                                    Type = ReferenceType.SecurityScheme,
-                                    Id = "Bearer"
-                                }
-                            },
-                            new string[] { }
-                        }
-                    }
-                );
-               //  s.TagActionsBy(api =>
-               //  {
-               //      if (api.GroupName != null)
-               //      {
-               //          return new[] { api.GroupName };
-               //      }
-
-               //      if (
-               //          api.ActionDescriptor
-               //          is ControllerActionDescriptor controllerActionDescriptor
-               //      )
-               //      {
-               //          return new[] { controllerActionDescriptor.ControllerName };
-               //      }
-
-               //      throw new InvalidOperationException("Unable to determine tag for endpoint.");
-                });
+                },
+                Array.Empty<string>()
+            }
+        }
+    );
+});
 
 // build the host
 var app = builder.Build();
