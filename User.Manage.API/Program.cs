@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using User.Manage.API.Authorization;
 using User.Manage.API.Models;
 using User.Manage.API.Models.Configuration;
 using User.Manage.Services.Emails;
@@ -110,7 +111,7 @@ builder.Services
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy(
-        "CheckPermission",
+        "BTCheckPermission",
         policy =>
         {
             policy.Requirements.Add(new CheckPermissionRequirement());

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using User.Manage.API.Authorization;
 
 namespace User.Manage.API.Controller
 {
@@ -9,10 +10,11 @@ namespace User.Manage.API.Controller
 
         public AdminController() => UserNames = new string[] { "Le Tuan Bao", "Le Van Ha" };
 
-        [Authorize(Roles = "Admin")]
+        [BTAuthorize(Permission = "User.GetAll")]
         [HttpPost("get-users")]
         public async Task<IActionResult> GetUsers()
         {
+            await Task.Delay(1000);
             return Ok(new { UserNames });
         }
     }
